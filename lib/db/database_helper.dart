@@ -29,9 +29,17 @@ class DatabaseHelper {
         await db.execute(
           "CREATE TABLE preferencias(id INTEGER PRIMARY KEY AUTOINCREMENT, gusto TEXT)",
         );
+        await db.execute(
+          "CREATE TABLE AccessManager(id INTEGER PRIMARY KEY AUTOINCREMENT, token TEXT)",
+        );
       },
       version: 1,
     );
+  }
+
+  Future<void> insertAccessManager(AccessManager accessManager) async {
+    final db = await database;
+    await db.insert('AccessManager', accessManager.toMap());
   }
 
   Future<void> insertPreferencia(Preferencia preferencia) async {
@@ -54,6 +62,11 @@ class DatabaseHelper {
     await db.delete('preferencias');
   }
 
+  Future<void> deleteAllAccessManager() async {
+    final db = await database;
+    await db.delete('AccessManager');
+  }
+
   Future<List<Greeting>> getGreetings() async {
     final db = await database;
     var greetingsMapList = await db.query('greetings');
@@ -68,5 +81,16 @@ class DatabaseHelper {
     return List.generate(preferenciasMapList.length, (i) {
       return Preferencia.fromMap(preferenciasMapList[i]);
     });
+  }
+
+  Future<AccessManager?> getLastAccessManager() async {
+    final db = await database;
+    var accessmanagerMapList = await db.query('AccessManager');
+    if (accessmanagerMapList.isNotEmpty) {
+      var lastIndex = accessmanagerMapList.length - 1;
+      return AccessManager.fromMap(accessmanagerMapList[lastIndex]);
+    } else {
+      return null;
+    }
   }
 }

@@ -62,6 +62,12 @@ class HomeScreen extends StatelessWidget {
               Navigator.pushNamed(context, '/fourting');
             },
           ),
+          ListTile(
+            title: Text('API'),
+            onTap: () {
+              Navigator.pushNamed(context, '/hello');
+            },
+          ),
         ],
       ),
     );

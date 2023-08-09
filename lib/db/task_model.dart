@@ -38,3 +38,24 @@ class Preferencia {
     );
   }
 }
+
+class AccessManager {
+  int? id;
+  String tokenAccess;
+
+  AccessManager({this.id,required this.tokenAccess});
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id' : id,
+      'token' : tokenAccess
+    };
+  }
+
+  factory AccessManager.fromMap(Map<String, dynamic> map) {
+    return AccessManager(
+      id: map['id'],
+      tokenAccess: map['token']
+    );
+  }
+}

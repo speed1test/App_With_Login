@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:all_in_one/db/task_model.dart';
+import 'package:all_in_one/db/database_helper.dart';
 
 void main() {
   runApp(MyApp());
@@ -49,11 +52,21 @@ class _LoginPageState extends State<LoginPage> {
   String _errorMessage = '';
   int _countdown = 2;
   bool _countdownActive = false;
+  final DatabaseHelper db = DatabaseHelper.instance;
+  String _token = '';
+
+  // Expresión regular para validar el campo de usuario
+  final RegExp _usernameRegExp = RegExp(r'^[a-z0-9_]*$');
 
   Future<void> _login() async {
     if (_usernameController.text.isEmpty || _passwordController.text.isEmpty) {
       setState(() {
         _errorMessage = 'Por favor, complete todos los campos.';
+      });
+      return;
+    } else if (!_usernameRegExp.hasMatch(_usernameController.text)) {
+      setState(() {
+        _errorMessage = 'El usuario no debe contener mayúsculas, espacios ni caracteres especiales.';
       });
       return;
     } else {
@@ -77,30 +90,42 @@ class _LoginPageState extends State<LoginPage> {
       'client_secret': 'pbkdf2_sha256\$600000\$Xdgs6cjpfrSn55pNF2WMWE\$l7mDp8I6l1TnbtCCMONaDeEHoanfb4MYQzRTKS8kqxo=',
     };
 
-    final http.Response response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode(data),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(data),
+      ).timeout(Duration(seconds: 10), onTimeout: () {
+        throw TimeoutException('Tiempo de espera agotado');
+      });
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = json.decode(response.body);
-      if (responseData.containsKey('access_token')) {
-        setState(() {
-          _loginStatus = 'Login Exitoso';
-          _countdownActive = true;
-        });
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = json.decode(response.body);
+        if (responseData.containsKey('access_token')) {
+          setState(() {
+            _loginStatus = 'Login Exitoso';
+            _countdownActive = true;
+            _token = responseData['access_token'];
+            _deleteAllAccessManager();
+            _addAccessManager(_token);
+          });
 
-        _startCountdown();
+          _startCountdown();
+        } else {
+          setState(() {
+            _loginStatus = 'Error de Login';
+            _countdownActive = false;
+          });
+        }
       } else {
         setState(() {
           _loginStatus = 'Error de Login';
           _countdownActive = false;
         });
       }
-    } else {
+    } catch (error) {
       setState(() {
-        _loginStatus = 'Error de Login';
+        _loginStatus = 'Error estableciendo comunicación con el servidor';
         _countdownActive = false;
       });
     }
@@ -138,6 +163,15 @@ class _LoginPageState extends State<LoginPage> {
         );
       },
     );
+  }
+
+  _addAccessManager(String token) async {
+    AccessManager newAccessManager = AccessManager(tokenAccess: token);
+    await db.insertAccessManager(newAccessManager);
+  }
+
+  _deleteAllAccessManager() async {
+    await db.deleteAllAccessManager();
   }
 
   @override
