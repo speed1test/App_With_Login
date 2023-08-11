@@ -5,6 +5,7 @@ import 'dart:async';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:all_in_one/db/task_model.dart';
 import 'package:all_in_one/db/database_helper.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 void main() {
   runApp(MyApp());
@@ -83,11 +84,15 @@ class _LoginPageState extends State<LoginPage> {
     }
 
     final String apiUrl = 'http://192.168.1.19:8000/auth/login/';
+    final storage = FlutterSecureStorage();
+    await storage.write(key: 'client_id', value: 'nE2hSHy0z4h5aifZJdJFwxUjrVGgbffKYboNaF7C');
+    await storage.write(key: 'client_secret', value: 'pbkdf2_sha256\$600000\$Xdgs6cjpfrSn55pNF2WMWE\$l7mDp8I6l1TnbtCCMONaDeEHoanfb4MYQzRTKS8kqxo=');
+
     final Map<String, String> data = {
       'username': _usernameController.text,
       'password': _passwordController.text,
-      'client_id': 'nE2hSHy0z4h5aifZJdJFwxUjrVGgbffKYboNaF7C',
-      'client_secret': 'pbkdf2_sha256\$600000\$Xdgs6cjpfrSn55pNF2WMWE\$l7mDp8I6l1TnbtCCMONaDeEHoanfb4MYQzRTKS8kqxo=',
+      'client_id': await storage.read(key: 'client_id') ?? '',
+      'client_secret': await storage.read(key: 'client_secret') ?? '',
     };
 
     try {
@@ -109,7 +114,6 @@ class _LoginPageState extends State<LoginPage> {
             _deleteAllAccessManager();
             _addAccessManager(_token);
           });
-
           _startCountdown();
         } else {
           setState(() {

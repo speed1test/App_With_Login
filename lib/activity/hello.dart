@@ -4,6 +4,7 @@ import 'package:http/http.dart' as http;
 import 'package:all_in_one/db/task_model.dart';
 import 'package:all_in_one/db/database_helper.dart';
 import 'dart:convert';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class HelloScreen extends StatelessWidget {
   @override
@@ -27,6 +28,7 @@ class _HelloState extends State<Hello> {
 
   Future<void> _fetchData() async {
     final String apiUrl = 'http://192.168.1.19:8000/auth/hello/';
+    final storage = FlutterSecureStorage();
 
     final AccessManager? accessManager = await db.getLastAccessManager();
     if (accessManager != null) {
@@ -34,6 +36,8 @@ class _HelloState extends State<Hello> {
 
       final Map<String, String> data = {
         'token': token,
+        'client_id': await storage.read(key: 'client_id') ?? '',
+        'client_secret': await storage.read(key: 'client_secret') ?? '',
       };
 
       try {
